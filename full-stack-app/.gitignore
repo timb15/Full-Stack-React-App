@@ -12,6 +12,8 @@
 /build
 
 # misc
+/markup
+/mockups
 .DS_Store
 .env.local
 .env.development.local
