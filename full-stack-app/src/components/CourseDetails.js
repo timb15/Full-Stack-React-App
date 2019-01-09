@@ -7,7 +7,8 @@ class CourseDetails extends Component {
     state ={
         course: [],
         user: [],
-        materials: []
+        materials: [],
+        description: []
     }
 
     componentDidMount() {
@@ -17,12 +18,14 @@ class CourseDetails extends Component {
                     this.setState({
                         course: res.data,
                         user: res.data.user,
+                        description: res.data.description.split('\n'),
                         materials: res.data.materialsNeeded.split('\n')
                     }); 
                 }else {
                     this.setState({
                         course: res.data,
                         user: res.data.user,
+                        description: res.data.description.split('\n')
                     }); 
                 }
             })
@@ -31,7 +34,7 @@ class CourseDetails extends Component {
 
     render() {
         return(
-            <Course course={this.state.course} user={this.state.user} materials={this.state.materials} />
+            <Course course={this.state.course} user={this.state.user} materials={this.state.materials} description={this.state.description} />
         )
     }
 }

@@ -1,21 +1,20 @@
 import React from 'react';
 
-const Course = ({courses, course, user, materials}) => {
+const Course = ({courses, course, user, materials, description}) => {
     let courseData = [];
 
     if(courses) {
         courseData = courses.map(course => 
-            <div className="bounds">
-                <div className="grid-33" key={course._id}>
-                    <a className="course--module course--link" href={`/course-details/${course._id}`}>
-                        <h4 className="course--label">Course</h4>
-                        <h3 className="course--title">{course.title}</h3>
-                    </a>
-                </div>
+            <div className="grid-33" key={course._id}>
+                <a className="course--module course--link" href={`/course-details/${course._id}`}>
+                    <h4 className="course--label">Course</h4>
+                    <h3 className="course--title">{course.title}</h3>
+                </a>
             </div>
         ); 
     } else if(course) {
         const mats = materials.map((mat, index) => <li key={index}>{mat}</li>)
+        const desc = description.map((paragraph, index) => <p key={index}>{paragraph}</p>)
 
         courseData = 
             <div>
@@ -38,7 +37,7 @@ const Course = ({courses, course, user, materials}) => {
                             <p>{`By ${user.firstName} ${user.lastName}`}</p>
                         </div>
                     <div className="course--description">
-                        <p>{course.description}</p>
+                        {desc}
                     </div>
                 </div>
                     <div className="grid-25 grid-right">
