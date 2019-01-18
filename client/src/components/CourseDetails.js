@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
+import { Consumer } from './Context';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+
 
 export default class CourseDetails extends Component {
   constructor(props) {
@@ -8,8 +11,11 @@ export default class CourseDetails extends Component {
     this.state = {
       course: [],
       user: [],
-      materials: [],
-      description: []
+      materials: null,
+      description: '',
+      time: null,
+      deleted: false,
+      notFound: false
     }
     this.getCourseData();
   }
@@ -18,30 +24,34 @@ export default class CourseDetails extends Component {
   getCourseData = () => {
     axios.get(`http://localhost:5000/api/courses/${this.props.match.params.id}`)
       .then(res => {
-        if (res.data.materialsNeeded) {
-          this.setState({
-            course: res.data,
-            user: res.data.user,
-            description: res.data.description.split('\n'),
-            materials: res.data.materialsNeeded.split('\n')
-          });
-        } else {
-          this.setState({
-            course: res.data,
-            user: res.data.user,
-            description: res.data.description.split('\n')
-          });
-        }
+        this.setState({
+          course: res.data,
+          user: res.data.user,
+          description: res.data.description,
+          materials: res.data.materialsNeeded,
+          time: res.data.estimatedTime
+        });
+
       })
-      .catch(err => console.log('Error fething data', err));
+      .catch(err => {
+        if (err.response.status === 404) {
+          this.setState({
+            notFound: true
+          })
+        }
+      });
+  }
+
+  //deletes course from database if the user has authorization
+  deleteCourse = (auth) => {
+    axios.delete(`http://localhost:5000/api/courses/${this.props.match.params.id}`, { headers: { 'Authorization': auth } })
+      .then(() => this.setState({
+        deleted: true
+      }))
+      .catch(err => console.log(err));
   }
 
   render() {
-    //maps each material to a list item
-    const mats = this.state.materials.map((mat, index) => <li key={index}>{mat}</li>)
-    //Breaks discription into paragraphs
-    const desc = this.state.description.map((paragraph, index) => <p key={index}>{paragraph}</p>)
-
     const courseData =
       <div>
         <div className="bounds course--detail">
@@ -52,43 +62,62 @@ export default class CourseDetails extends Component {
               <p>{`By ${this.state.user.firstName} ${this.state.user.lastName}`}</p>
             </div>
             <div className="course--description">
-              {desc}
+              <ReactMarkdown source={this.state.description} />
             </div>
           </div>
           <div className="grid-25 grid-right">
             <div className="course--stats">
               <ul className="course--stats--list">
-                <li className="course--stats--list--item">
-                  <h4>Estimated Time</h4>
-                  <h3>{this.state.course.estimatedTime}</h3>
-                </li>
-                <li className="course--stats--list--item">
-                  <h4>Materials Needed</h4>
-                  <ul>
-                    {mats}
-                  </ul>
-                </li>
+
+                { //does not display Estimated time if the value is null
+                  (this.state.time)
+                    ? <li className="course--stats--list--item">
+                      <h4>Estimated Time</h4>
+                      <h3>{this.state.time}</h3>
+                    </li>
+                    : null
+                }
+                { //does not display Materials if the value is null
+                  (this.state.materials)
+                    ? <li className="course--stats--list--item">
+                      <h4>Materials Needed</h4>
+                      <ul>
+                        <ReactMarkdown source={this.state.materials} />
+                      </ul>
+                    </li>
+                    : null
+                }
               </ul>
             </div>
           </div>
         </div>
-      </div>
-
+      </div>;
     return (
-      <React.Fragment>
-        <div className="actions--bar">
-          <div className="bounds">
-            <div className="grid-100">
-              <span>
-                <Link className="button" to={`/courses/${this.state.course._id}/update`}>Update Course</Link>
-                <Link className="button" to="/">Delete Course</Link>
-              </span>
-              <Link className="button button-secondary" to="/">Return to List</Link>
+      (this.state.notFound) //redirects to notfound path if the course route does not exist
+        ? <Redirect to='/notfound' />
+        : (this.state.deleted) //redirects to courses page if the course has been deleted
+          ? <Redirect to='/' />
+          : <React.Fragment>
+            <div className="actions--bar">
+              <div className="bounds">
+                <div className="grid-100">
+                  <Consumer>
+                    {context => (
+                      //checks if user is signed in, and owns the course else does not display update or delete buttons
+                      (context.authenticated && context.id === this.state.user._id)
+                        ? <span>
+                          <Link className="button" to={`/courses/${this.state.course._id}/update`}>Update Course</Link>
+                          <button className="button" onClick={() => this.deleteCourse(context.auth)}>Delete Course</button>
+                        </span>
+                        : null
+                    )}
+                  </Consumer>
+                  <Link className="button button-secondary" to="/">Return to List</Link>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        {courseData}
-      </React.Fragment>
+            {courseData}
+          </React.Fragment>
     )
   }
 }

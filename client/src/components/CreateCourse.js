@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
+import { Link, Redirect } from 'react-router-dom';
 import { Consumer } from './Context';
-import { Redirect } from 'react-router-dom';
 import axios from 'axios';
 
 
@@ -13,12 +13,14 @@ export default class CreateCourse extends Component {
       title: '',
       description: '',
       materials: '',
-      time: ''
+      time: '',
+      created: false,
+      validationErrors: null
     }
     this.handleChange = this.handleChange.bind(this);
   }
 
-  //creates a course from the form data and user credentials
+  //creates a course from the form data and user credentials and sets validationError state if title or description are blank
   createCourse(auth) {
     const formData = {
       'title': this.state.title,
@@ -27,11 +29,15 @@ export default class CreateCourse extends Component {
       'estimatedTime': this.state.time
     }
     axios.post('http://localhost:5000/api/courses', formData, { headers: { 'Authorization': auth } })
-      .then(res => console.log(res))
+      .then(() => {
+        this.setState({
+          created: true
+        });
+      })
       .catch(err => {
-        (err.response.status === 500)
-          ? console.dir(err)
-          : console.log(err)
+        this.setState({
+          validationErrors: err.response.data.split(',')
+        });
       });
   }
 
@@ -46,23 +52,38 @@ export default class CreateCourse extends Component {
     return (
       <Consumer>
         {context => {
-          if (!context.authenticated) {
-            return <Redirect to='/sign-in' />
-          }
           const auth = context.auth;
           return (
             <div className="bounds course--detail">
+              {
+                (this.state.created) //Redirects to courses home once a course has been created
+                  ? <Redirect to='/' />
+                  : null
+              }
               <h1>Create Course</h1>
               <div>
-                <div>
-                  <h2 className="validation--errors--label">Validation errors</h2>
-                  <div className="validation-errors">
-                    <ul>
-                      <li>Please provide a value for "Title"</li>
-                      <li>Please provide a value for "Description"</li>
-                    </ul>
-                  </div>
-                </div>
+                {
+                  (this.state.validationErrors) //renders validation errors if there are any
+                    ? <div>
+                      <h2 className="validation--errors--label">Validation errors</h2>
+                      <div className="validation-errors">
+                        <ul>
+                          {
+                            this.state.validationErrors.map((error) => {
+                              if (error.includes('title')) {
+                                return <li key={error}>Please enter a title!</li>
+                              }
+                              if (error.includes('description')) {
+                                return <li key={error}>Please enter a description!</li>
+                              }
+                              return null
+                            })
+                          }
+                        </ul>
+                      </div>
+                    </div>
+                    : null
+                }
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   this.createCourse(auth);
@@ -105,7 +126,7 @@ export default class CreateCourse extends Component {
                   </div>
                   <div className="grid-100 pad-bottom">
                     <button className="button" type="submit">Create Course</button>
-                    <button className="button button-secondary" >Cancel</button>
+                    <Link className="button button-secondary" to="/">Cancel</Link>
                   </div>
                 </form>
               </div>

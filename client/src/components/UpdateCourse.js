@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { Consumer } from './Context';
-import { Redirect } from 'react-router-dom';
+import { Redirect, Link } from 'react-router-dom';
 
 
 
@@ -13,7 +13,9 @@ export default class UpdateCourse extends Component {
       title: '',
       description: '',
       materials: '',
-      time: ''
+      time: '',
+      validationErrors: false,
+      notFound: false
     }
     this.getCourseData();
     this.handleChange = this.handleChange.bind(this);
@@ -31,7 +33,13 @@ export default class UpdateCourse extends Component {
           time: res.data.estimatedTime
         })
       })
-      .catch(err => console.log('Error fething data', err));
+      .catch(err => {
+        if (err.response.status === 404) {
+          this.setState({
+            notFound: true
+          });
+        }
+      });
   }
 
   //updates course details when the form is submitted
@@ -45,9 +53,9 @@ export default class UpdateCourse extends Component {
     axios.put(`http://localhost:5000/api/courses/${this.props.match.params.id}`, formData, { headers: { 'Authorization': auth } })
       .then(res => console.log(res))
       .catch(err => {
-        (err.response.status === 500)
-          ? console.dir(err)
-          : console.log(err)
+        this.setState({
+          validationErrors: err.response.data.message.split(',')
+        });
       });
   }
 
@@ -62,16 +70,37 @@ export default class UpdateCourse extends Component {
   render() {
 
     return (
-      <Consumer>
-        {context => {
-          if (!context.authenticated) {
-            return <Redirect to='/sign-in' />
-          }
-          const auth = context.auth;
-          return (
-            <div>
+      (this.state.notFound) //redirects to notfound path if the course route does not exist
+        ? <Redirect to='/notfound' />
+        :
+        <Consumer>
+          {context => {
+            const auth = context.auth;
+            return (
               <div className="bounds course--detail">
                 <h1>Update Course</h1>
+                {
+                  (this.state.validationErrors) //renders validation errors if there are any
+                    ? <div>
+                      <h2 className="validation--errors--label">Validation errors</h2>
+                      <div className="validation-errors">
+                        <ul>
+                          {
+                            this.state.validationErrors.map((error) => {
+                              if (error.includes('title')) {
+                                return <li key={error}>Please enter a title!</li>
+                              }
+                              if (error.includes('description')) {
+                                return <li key={error}>Please enter a description!</li>
+                              }
+                              return null
+                            })
+                          }
+                        </ul>
+                      </div>
+                    </div>
+                    : null
+                }
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   this.updateCourse(auth);
@@ -113,13 +142,12 @@ export default class UpdateCourse extends Component {
                   </div>
                   <div className="grid-100 pad-bottom">
                     <button className="button" type="submit">Update Course</button>
-                    <button className="button button-secondary" >Cancel</button>
+                    <Link className="button button-secondary" to={`/courses/${this.props.match.params.id}`}>Cancel</Link>
                   </div>
                 </form>
               </div>
-            </div>
-          )
-        }}
-      </Consumer>)
+            )
+          }}
+        </Consumer>)
   }
 }

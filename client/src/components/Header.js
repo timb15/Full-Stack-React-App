@@ -13,7 +13,7 @@ const Header = () => {
               <div className="bounds">
                 <h1 className="header--logo">Courses</h1>
                 <nav>
-                  <span>Welcome {context.user.firstName} {context.user.lastName}</span>
+                  <span>Welcome {context.firstName} {context.lastName}</span>
                   <Link className="signout" to="/sign-out">Sign Out</Link>
                 </nav>
               </div>
@@ -23,8 +23,8 @@ const Header = () => {
               <div className="bounds">
                 <h1 className="header--logo">Courses</h1>
                 <nav>
-                  <Link className="signup" to="/sign-up">Sign Up</Link>
-                  <Link className="signin" to="/sign-in">Sign In</Link>
+                  <Link className="signup" to="/signup">Sign Up</Link>
+                  <Link className="signin" to="/signin">Sign In</Link>
                 </nav>
               </div>
             </div>
