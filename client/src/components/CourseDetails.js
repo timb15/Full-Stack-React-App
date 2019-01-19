@@ -15,7 +15,8 @@ export default class CourseDetails extends Component {
       description: '',
       time: null,
       deleted: false,
-      notFound: false
+      notFound: false,
+      unhandledError: false
     }
     this.getCourseData();
   }
@@ -37,6 +38,10 @@ export default class CourseDetails extends Component {
         if (err.response.status === 404) {
           this.setState({
             notFound: true
+          });
+        } else {
+          this.setState({
+            unhandledError: true
           })
         }
       });
@@ -48,7 +53,11 @@ export default class CourseDetails extends Component {
       .then(() => this.setState({
         deleted: true
       }))
-      .catch(err => console.log(err));
+      .catch(err => {
+        this.setState({
+          unhandledError: true
+        });
+      });
   }
 
   render() {
@@ -92,32 +101,36 @@ export default class CourseDetails extends Component {
           </div>
         </div>
       </div>;
+
     return (
-      (this.state.notFound) //redirects to notfound path if the course route does not exist
-        ? <Redirect to='/notfound' />
-        : (this.state.deleted) //redirects to courses page if the course has been deleted
-          ? <Redirect to='/' />
-          : <React.Fragment>
-            <div className="actions--bar">
-              <div className="bounds">
-                <div className="grid-100">
-                  <Consumer>
-                    {context => (
-                      //checks if user is signed in, and owns the course else does not display update or delete buttons
-                      (context.authenticated && context.id === this.state.user._id)
-                        ? <span>
-                          <Link className="button" to={`/courses/${this.state.course._id}/update`}>Update Course</Link>
-                          <button className="button" onClick={() => this.deleteCourse(context.auth)}>Delete Course</button>
-                        </span>
-                        : null
-                    )}
-                  </Consumer>
-                  <Link className="button button-secondary" to="/">Return to List</Link>
+      (this.state.unhandledError)//redirects to error path if the request to api returns an unhandled error
+        ? <Redirect to="/error" />
+        :
+        (this.state.notFound) //redirects to notfound path if the course route does not exist
+          ? <Redirect to='/notfound' />
+          : (this.state.deleted) //redirects to courses page if the course has been deleted
+            ? <Redirect to='/' />
+            : <React.Fragment>
+              <div className="actions--bar">
+                <div className="bounds">
+                  <div className="grid-100">
+                    <Consumer>
+                      {context => (
+                        //checks if user is signed in, and owns the course else does not display update or delete buttons
+                        (context.authenticated && context.authenticatedUserId === this.state.user._id)
+                          ? <span>
+                            <Link className="button" to={`/courses/${this.state.course._id}/update`}>Update Course</Link>
+                            <button className="button" onClick={() => this.deleteCourse(context.auth)}>Delete Course</button>
+                          </span>
+                          : null
+                      )}
+                    </Consumer>
+                    <Link className="button button-secondary" to="/">Return to List</Link>
+                  </div>
                 </div>
               </div>
-            </div>
-            {courseData}
-          </React.Fragment>
+              {courseData}
+            </React.Fragment>
     )
   }
 }

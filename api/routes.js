@@ -19,7 +19,11 @@ router.post('/users', (req, res, next) => {
     const newUser = req.body;
     User.create(newUser, function (err, course) {
         if (err) {
-            if (err.name === 'MongoError' && err.code === 11000) return next(new Error("Email address is already in use"));
+            if (err.name === 'MongoError' && err.code === 11000) {
+                const error = new Error("Email address is already in use");
+                error.status = 409;
+                return next(error);
+            }
             if (err.name === 'ValidationError') return res.status(400).send(err.message);
             return next(err);
         }
@@ -77,18 +81,15 @@ router.put('/courses/:id', checkForAuthentication, function (req, res, next) {
         .findById(req.params.id)
         .populate('user')
         .exec(function (err, course) {
-            if (err) {
-                if (err.name === 'ValidationError') return res.status(400).send(err.message);
-                return next(err);
-            }
-
             if (course.user.emailAddress !== req.user.emailAddress || course.user.password !== req.user.password) {
                 return res.status(403).send();
             }
-
             course.set(req.body);
             course.save(function (err, updatedCourse) {
-                if (err) return next(err);
+                if (err) {
+                    if (err.name === 'ValidationError') return res.status(400).send(err.message);
+                    return next(err);
+                }
                 res.status(204).send();
             });
         });

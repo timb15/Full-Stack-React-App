@@ -57,19 +57,47 @@ export class Provider extends Component {
     history.history.goBack();
   }
 
+  //creates validation errors
+  generateValidationErrors = (errors) => {
+    return (
+      errors.map((error) => {
+        if (error.includes('title')) {
+          return <li key={error}>Please enter a title!</li>
+        }
+        if (error.includes('description')) {
+          return <li key={error}>Please enter a description!</li>
+        }
+        if (error.includes('firstName')) {
+          return <li key={error}>Please enter a first name!</li>
+        }
+        if (error.includes('lastName')) {
+          return <li key={error}>Please enter a last name!</li>
+        }
+        if (error.includes('emailAddress')) {
+          return <li key={error}>Please enter a valid email address!</li>
+        }
+        if (error.includes('password')) {
+          return <li key={error}>Please enter a password!</li>
+        }
+        return null
+      })
+    )
+  }
+
   render() {
     return (
       //sets states and functions that will be availble to components via Consumer
       <AppContext.Provider value={{
         firstName: this.state.firstName,
         lastName: this.state.lastName,
-        id: this.state.id,
+        authenticatedUserId: this.state.id,
         authenticated: this.state.isAuthenticated,
         auth: this.state.auth,
         actions: {
           signIn: this.signIn,
           signOut: this.signOut,
           lastPage: this.lastPage,
+          validationErrors: this.generateValidationErrors
         }
       }}>
         {this.props.children}

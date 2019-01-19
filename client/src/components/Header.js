@@ -14,7 +14,7 @@ const Header = () => {
                 <h1 className="header--logo">Courses</h1>
                 <nav>
                   <span>Welcome {context.firstName} {context.lastName}</span>
-                  <Link className="signout" to="/sign-out">Sign Out</Link>
+                  <Link className="signout" to="/signout">Sign Out</Link>
                 </nav>
               </div>
             </div>
