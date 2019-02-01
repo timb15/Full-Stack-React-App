@@ -3,12 +3,20 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 ## Tech-Degree Project 10
 # Full-Stack App
 
-Going for exceeds expectations.
+
 
 # Steps to run the app:
 
-1. Open a terminal and go to the api directory. Once in the  api directory enter npm start to start up the api.
+1. Open a terminal and navigate to the api directory. 
 
-2.Open another terminal and navigate to the client directory. Enter npm start to run the app. App will run on localhost:3000
+2.Type npm install.
+
+3.Type npm start to start the API.
+
+4. Navigate to client directory.
+
+5. Type npm install
+
+6.Type npm start. App will run on localhost:3000
 
 
